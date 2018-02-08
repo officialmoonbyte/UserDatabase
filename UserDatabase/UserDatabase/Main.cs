@@ -764,6 +764,11 @@ namespace vortexstudio.universalserver.userdatabase
             client.Client.Send(Encoding.UTF8.GetBytes(value));
         }
 
+        public void Unload()
+        {
+            
+        }
+
         #endregion
     }
 
