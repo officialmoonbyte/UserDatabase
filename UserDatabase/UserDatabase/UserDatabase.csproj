@@ -35,8 +35,8 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IServerPlugin.cs, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IServerPlugin.1.0.2-alpha1\lib\net45\IServerPlugin.cs.dll</HintPath>
+    <Reference Include="IServerPlugin.cs, Version=2.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\IServerPlugin.2.0.2\lib\net45\IServerPlugin.cs.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

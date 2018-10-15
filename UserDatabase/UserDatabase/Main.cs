@@ -27,6 +27,19 @@ namespace vortexstudio.universalserver.userdatabase
         //Private Vars
         string _ServerDirectory = null;
 
+        event EventHandler<SendMessageEventArgs> IServerPlugin.SendMessage
+        {
+            add
+            {
+                throw new NotImplementedException();
+            }
+
+            remove
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         #endregion
 
         #region OnLoad
@@ -36,7 +49,7 @@ namespace vortexstudio.universalserver.userdatabase
         {
             //Set all of the directories
             UserDirectory = ServerDirectory + @"Users\";
-            SettingDirectory = ServerDirectory + @"Settings\";
+            SettingDirectory = ServerDirectory + @"Setting\";
             ValueDirectory = ServerDirectory + @"Values\";
 
             //Sets the server directory
@@ -52,13 +65,12 @@ namespace vortexstudio.universalserver.userdatabase
 
         #region OnInvoke
 
-        //Activates when the plugin has been invoked
-        public void Invoke(TcpListener _serverSocket, TcpClient _clientSocket, int port, List<string> Args, string ServerDirectory)
-        {
-            //Set default listeners and client values
-            ServerSocket = _serverSocket;
-            ClientSocket = _clientSocket;
+        ClientSocketWorkload Workload; ClientContext Context;
 
+        //Activates when the plugin has been invoked
+        public void Invoke(ClientSocketWorkload workload, ClientContext context, int port, List<string> Args, string ServerDirectory)
+        {
+            Workload = workload; Context = context;
             //Processes the command.
             try
             {
@@ -104,12 +116,12 @@ namespace vortexstudio.universalserver.userdatabase
                 }
                 else
                 {
-                    SendMessage(ClientSocket, "USRDBS_UNKNOWN");
+                    SendMessage("USRDBS_UNKNOWN");
                 }
             }
             catch
             {
-                SendMessage(ClientSocket, "USRDBS_SPLIT");
+                SendMessage("USRDBS_SPLIT");
                 Console.WriteLine("[UserDatabase] Failed to split the user request.");
             }
         }
@@ -143,7 +155,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(usrFile))
                 {
                     //Send a UserDoesNotExist message
-                    SendMessage(ClientSocket, "EDTSET_UDOESNOTEXIST");
+                    SendMessage("EDTSET_UDOESNOTEXIST");
                     return false;
                 }
 
@@ -154,7 +166,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (m != Username + ":" + Password)
                 {
                     //Sends a AUTHERROR message
-                    SendMessage(ClientSocket, "EDTSET_AUTHE");
+                    SendMessage("EDTSET_AUTHE");
                     return false;
                 }
                 
@@ -183,7 +195,7 @@ namespace vortexstudio.universalserver.userdatabase
                         File.WriteAllLines(usrSettingFileDirectory, allSettingValue);
 
                         //If true, sends a sucess message.
-                        SendMessage(ClientSocket, "EDTSET_TRUE");
+                        SendMessage("EDTSET_TRUE");
 
                         return true;
                     }
@@ -196,13 +208,13 @@ namespace vortexstudio.universalserver.userdatabase
                 File.WriteAllLines(usrSettingFileDirectory, allSettingValue);
 
                 //If true, sends a sucess message
-                SendMessage(ClientSocket, "EDTSET_TRUE");
+                SendMessage("EDTSET_TRUE");
                 return true;
             }
             catch (Exception e)
             {
                 //Sends a error message
-                SendMessage(ClientSocket, "EDTSET_FALSE");
+                SendMessage("EDTSET_FALSE");
 
                 //Logs the information in the console
                 Console.WriteLine("[UserDatabase] ERROR : Method EditUserSetting has encounter a error : " + e.ToString());
@@ -231,7 +243,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(usrFile))
                 {
                     //Send a user does not exist error
-                    SendMessage(ClientSocket, "GETSET_UDOESNOTEXIST");
+                    SendMessage("GETSET_UDOESNOTEXIST");
                     return false;
                 }
 
@@ -240,7 +252,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (fileInfo != Username + ":" + Password)
                 {
                     //Send a AUTHERROR message
-                    SendMessage(ClientSocket, "GETSET_AUTHE");
+                    SendMessage("GETSET_AUTHE");
                     return false;
                 }
 
@@ -258,26 +270,26 @@ namespace vortexstudio.universalserver.userdatabase
                         if (tmpSplit[0] == SettingTitle)
                         {
                             //Sends a return message
-                            SendMessage(ClientSocket, tmpSplit[1]);
+                            SendMessage(tmpSplit[1]);
                             return true;
                         }
                     }
 
                     //Sends the message that the setting does not exist.
-                    SendMessage(ClientSocket, "GETSET_DOESNOTEXIST");
+                    SendMessage("GETSET_DOESNOTEXIST");
                     return false;
                 }
                 else
                 {
                     //Sends the message that the get setting does not exist
-                    SendMessage(ClientSocket, "GETSET_FDOESNOTEXIST");
+                    SendMessage("GETSET_FDOESNOTEXIST");
                     return false;
                 }
             }
             catch (Exception e)
             {
                 //Sends a false error message
-                SendMessage(ClientSocket, "GETSET_FALSE");
+                SendMessage("GETSET_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method GetUserSetting has encounter a error : " + e.ToString());
                 return false;
             }
@@ -304,7 +316,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(usrFile))
                 {
                     //Sends a UserDoesNotExist message
-                    SendMessage(ClientSocket, "CEKSET_UDOESNOTEXIST");
+                    SendMessage("CEKSET_UDOESNOTEXIST");
                     return false;
                 }
 
@@ -313,7 +325,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (m != Username + ":" + Password)
                 {
                     //Sends a auth error
-                    SendMessage(ClientSocket, "CEKSET_AUTHE");
+                    SendMessage("CEKSET_AUTHE");
                     return false;
                 }
 
@@ -332,19 +344,19 @@ namespace vortexstudio.universalserver.userdatabase
                     if (tmpSplit[0] == SettingTitle)
                     {
                         //Send a true message
-                        SendMessage(ClientSocket, "CEKSET_TRUE");
+                        SendMessage("CEKSET_TRUE");
                         return true;
                     }
                 }
 
                 //Send a false message
-                SendMessage(ClientSocket, "CETSET_TRUEF");
+                SendMessage("CETSET_TRUEF");
                 return false;
             }
             catch (Exception e)
             {
                 //Sends a false error message
-                SendMessage(ClientSocket, "CHKSET_FALSE");
+                SendMessage("CHKSET_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method CheckUserSetting has encounter a error : " + e.ToString());
                 return false;
             }
@@ -361,7 +373,7 @@ namespace vortexstudio.universalserver.userdatabase
             try
             {
                 //Check all vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "SVREDT_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("SVREDT_VALUER"); return false; }
 
                 //Get the value directory
                 string valueDirectory = _ServerDirectory + @"Values\";
@@ -377,14 +389,14 @@ namespace vortexstudio.universalserver.userdatabase
                 File.WriteAllText(valueDirectory + ValueTitle + ".val", ValueContents);
 
                 //Sends a true message
-                SendMessage(ClientSocket, "SVREDT_TRUE");
+                SendMessage("SVREDT_TRUE");
 
                 return true;
             }
             catch (Exception e)
             {
                 //Sends a false error message
-                SendMessage(ClientSocket, "SVREDT_FALSE");
+                SendMessage("SVREDT_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method EditServerValue has encounter a error : " + e.ToString());
                 return false;
             }
@@ -400,7 +412,7 @@ namespace vortexstudio.universalserver.userdatabase
             try
             {
                 //Check all local vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "SVRCEK_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("SVRCEK_VALUER"); return false; }
 
                 //Initialize value directory
                 string valueDirectory = _ServerDirectory + @"Values\";
@@ -409,20 +421,20 @@ namespace vortexstudio.universalserver.userdatabase
                 if (File.Exists(valueDirectory + ValueTitle + ".val"))
                 {
                     //Send a true message
-                    SendMessage(ClientSocket, "SVRCEK_TRUE");
+                    SendMessage("SVRCEK_TRUE");
                     return true;
                 }
                 else
                 {
                     //Send a false message
-                    SendMessage(ClientSocket, "SVRCEK_TRUEF");
+                    SendMessage("SVRCEK_TRUEF");
                     return true;
                 }
             }
             catch (Exception e)
             {
                 //Sends a false error message
-                SendMessage(ClientSocket, "SVRCEK_FALSE");
+                SendMessage("SVRCEK_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method GetServerValue has encounter a error : " + e.ToString());
                 return false;
             }
@@ -438,7 +450,7 @@ namespace vortexstudio.universalserver.userdatabase
             try
             {
                 //Check all vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "SVRGET_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("SVRGET_VALUER"); return false; }
 
                 //Initialize value directory
                 string valueDirectory = _ServerDirectory + @"Values\";
@@ -450,7 +462,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(valueFile))
                 {
                     //Sends a setting does not exist message
-                    SendMessage(ClientSocket, "SVRGET_DOESNOTEXIST");
+                    SendMessage("SVRGET_DOESNOTEXIST");
                     return false;
                 }
 
@@ -458,14 +470,14 @@ namespace vortexstudio.universalserver.userdatabase
                 string fileContents = File.ReadAllText(valueFile);
 
                 //Sends the content to the client
-                SendMessage(ClientSocket, fileContents);
+                SendMessage(fileContents);
                 return true;
 
             }
             catch (Exception e)
             {
                 //Send a false error message
-                SendMessage(ClientSocket, "SVRGET_FALSE");
+                SendMessage("SVRGET_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method GetServerValue has encounter a error : " + e.ToString());
                 return false;
             }
@@ -488,7 +500,7 @@ namespace vortexstudio.universalserver.userdatabase
                 NewPassword = sha512Encryption.Encrypt(NewPassword);
 
                 //Check the vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "CNGPSD_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("CNGPSD_VALUER"); return false; }
 
                 //Get the user file directory
                 string usrFile = UserDirectory + Username + ".usr";
@@ -497,7 +509,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(usrFile))
                 {
                     //Send a user does not exist message
-                    SendMessage(ClientSocket, "CNGPSD_DOESNOTEXIST");
+                    SendMessage("CNGPSD_DOESNOTEXIST");
                     return false;
                 }
 
@@ -505,13 +517,13 @@ namespace vortexstudio.universalserver.userdatabase
                 File.WriteAllText(usrFile, Username + ":" + NewPassword);
 
                 //Send a true message
-                SendMessage(ClientSocket, "CNGPSD_TRUE");
+                SendMessage("CNGPSD_TRUE");
                 return true;
             }
             catch (Exception e)
             {
                 //Send a false error message
-                SendMessage(ClientSocket, "CNGPSD_FALSE");
+                SendMessage("CNGPSD_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method ChangePassword has encounter a error : " + e.ToString());
                 return false;
             }
@@ -533,7 +545,7 @@ namespace vortexstudio.universalserver.userdatabase
                 Password = sha512Encryption.Encrypt(Password);
 
                 //Check if the varables are ok
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "CNGUSR_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("CNGUSR_VALUER"); return false; }
                 
                 //Initialize the file directory for the user file
                 string usrFile = UserDirectory + Username + ".usr";
@@ -542,7 +554,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(usrFile))
                 {
                     //Send a user does not exist error
-                    SendMessage(ClientSocket, "CNGUSR_DOESNOTEXIST");
+                    SendMessage("CNGUSR_DOESNOTEXIST");
                     return false;
                 }
 
@@ -553,7 +565,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (fileRead != Username + ":" + Password)
                 {
                     //Send a wrong password event
-                    SendMessage(ClientSocket, "CNGUSR_WNGCRED");
+                    SendMessage("CNGUSR_WNGCRED");
                     return false;
                 }
 
@@ -565,13 +577,13 @@ namespace vortexstudio.universalserver.userdatabase
 
                 //Changes the settings file name to the new user
                 File.Move(_ServerDirectory + @"Settings\" + Username + ".dat", _ServerDirectory + @"Settings\" + NewUsername + ".dat");
-                SendMessage(ClientSocket, "CNGUSR_TRUE");
+                SendMessage("CNGUSR_TRUE");
                 return true;
             }
             catch (Exception e)
             {
                 //Sends a false error message
-                SendMessage(ClientSocket, "CNGUSR_FALSE");
+                SendMessage("CNGUSR_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method ChangeUser has encounter a error : " + e.ToString());
                 return false;
             }
@@ -592,7 +604,7 @@ namespace vortexstudio.universalserver.userdatabase
                 Password = sha512Encryption.Encrypt(Password);
 
                 //Check if all vars are correct
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "USRLOG_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("USRLOG_VALUER"); return false; }
 
                 //Gets the user directory
                 string usrDirectory = _ServerDirectory + @"Users\";
@@ -601,7 +613,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(usrDirectory + Username + ".usr"))
                 {
                     //Returns user does not exist
-                    SendMessage(ClientSocket, "USRLOG_DOESNOTEXIST");
+                    SendMessage("USRLOG_DOESNOTEXIST");
                     return false;
                 }
                 else
@@ -613,13 +625,13 @@ namespace vortexstudio.universalserver.userdatabase
                     if (fileRead == Username + ":" + Password)
                     {
                         //Returns the true message
-                        SendMessage(ClientSocket, "USRLOG_TRUE");
+                        SendMessage("USRLOG_TRUE");
                         return true;
                     }
                     else
                     {
                         //Returns the false message
-                        SendMessage(ClientSocket, "USRLOG_WRONG");
+                        SendMessage("USRLOG_WRONG");
                         return false;
                     }
                 }
@@ -627,7 +639,7 @@ namespace vortexstudio.universalserver.userdatabase
             catch (Exception e)
             {
                 //Returns the false message
-                SendMessage(ClientSocket, "USRLOG_FALSE");
+                SendMessage("USRLOG_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method UserLogin has encounter a error : " + e.ToString());
                 return false;
             }
@@ -648,7 +660,7 @@ namespace vortexstudio.universalserver.userdatabase
                 Password = sha512Encryption.Encrypt(Password);
 
                 //Check all of the vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "DELUSR_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("DELUSR_VALUER"); return false; }
 
                 //Get the user file directory
                 string userFile = UserDirectory + Username + ".usr";
@@ -657,7 +669,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (!File.Exists(userFile))
                 {
                     //Sends a user does not exist message
-                    SendMessage(ClientSocket, "DELUSR_DOESNOTEXIST");
+                    SendMessage("DELUSR_DOESNOTEXIST");
                     return false;
                 }
 
@@ -672,19 +684,19 @@ namespace vortexstudio.universalserver.userdatabase
                     File.Delete(_ServerDirectory + @"Settings\" + Username + ".dat");
 
                     //Sends a true message
-                    SendMessage(ClientSocket, "DELUSR_TRUE");
+                    SendMessage("DELUSR_TRUE");
                     return true;
                 }
                 else
                 {
                     //Sends a autherror message
-                    SendMessage(ClientSocket, "DELUSR_PSDWNG");
+                    SendMessage("DELUSR_PSDWNG");
                     return false;
                 }
             }
             catch (Exception e)
             {
-                SendMessage(ClientSocket, "DELUSR_FALSE");
+                SendMessage("DELUSR_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method DeleteUser has encounter a error : " + e.ToString());
                 return false;
             }
@@ -705,7 +717,7 @@ namespace vortexstudio.universalserver.userdatabase
                 Password = sha512Encryption.Encrypt(Password);
 
                 //Check if the vars are correct
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage(ClientSocket, "USRADD_VALUER"); return false; }
+                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("USRADD_VALUER"); return false; }
 
                 //Get the directory for the user
                 string userFile = UserDirectory + Username + ".usr";
@@ -714,7 +726,7 @@ namespace vortexstudio.universalserver.userdatabase
                 if (File.Exists(userFile))
                 {
                     //Send a user does not exist message
-                    SendMessage(ClientSocket, "USRADD_EXIST"); return false;
+                    SendMessage("USRADD_EXIST"); return false;
                 }
 
                 //Create both the user file and the setting file
@@ -723,12 +735,12 @@ namespace vortexstudio.universalserver.userdatabase
                 File.WriteAllText(userFile, Username + ":" + Password);
                 
                 //Sends a true message
-                SendMessage(ClientSocket, "USRADD_TRUE"); return true;
+                SendMessage("USRADD_TRUE"); return true;
             }
             catch (Exception e)
             {
                 //Sends a false error message
-                SendMessage(ClientSocket, "USRADD_FALSE");
+                SendMessage("USRADD_FALSE");
                 Console.WriteLine("[UserDatabase] ERROR : Method AddUser has encounter a error : " + e.ToString());
                 return false;
             }
@@ -758,18 +770,18 @@ namespace vortexstudio.universalserver.userdatabase
         /// </summary>
         /// <param name="client">TCP client to send the value to</param>
         /// <param name="value">String of text</param>
-        private void SendMessage(TcpClient client, string value)
+        private void SendMessage(string value)
         {
             //Sends a string to a client using UTF8
-            client.Client.Send(Encoding.UTF8.GetBytes(value));
-        }
-
-        public void Unload()
-        {
-            
+            Workload.SendMessage(Context, value);
         }
 
         #endregion
+
+        public void Unload()
+        {
+
+        }
     }
 
     #region Encrypting
