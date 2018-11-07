@@ -372,9 +372,6 @@ namespace vortexstudio.universalserver.userdatabase
         {
             try
             {
-                //Check all vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("SVREDT_VALUER"); return false; }
-
                 //Get the value directory
                 string valueDirectory = _ServerDirectory + @"Values\";
 
@@ -411,9 +408,6 @@ namespace vortexstudio.universalserver.userdatabase
         {
             try
             {
-                //Check all local vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("SVRCEK_VALUER"); return false; }
-
                 //Initialize value directory
                 string valueDirectory = _ServerDirectory + @"Values\";
 
@@ -449,9 +443,6 @@ namespace vortexstudio.universalserver.userdatabase
         {
             try
             {
-                //Check all vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("SVRGET_VALUER"); return false; }
-
                 //Initialize value directory
                 string valueDirectory = _ServerDirectory + @"Values\";
 
@@ -499,9 +490,6 @@ namespace vortexstudio.universalserver.userdatabase
                 Password = sha512Encryption.Encrypt(Password);
                 NewPassword = sha512Encryption.Encrypt(NewPassword);
 
-                //Check the vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("CNGPSD_VALUER"); return false; }
-
                 //Get the user file directory
                 string usrFile = UserDirectory + Username + ".usr";
 
@@ -544,9 +532,6 @@ namespace vortexstudio.universalserver.userdatabase
                 //Encrypts the user file
                 Password = sha512Encryption.Encrypt(Password);
 
-                //Check if the varables are ok
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("CNGUSR_VALUER"); return false; }
-                
                 //Initialize the file directory for the user file
                 string usrFile = UserDirectory + Username + ".usr";
 
@@ -603,9 +588,6 @@ namespace vortexstudio.universalserver.userdatabase
                 //Gets the encrypted password
                 Password = sha512Encryption.Encrypt(Password);
 
-                //Check if all vars are correct
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("USRLOG_VALUER"); return false; }
-
                 //Gets the user directory
                 string usrDirectory = _ServerDirectory + @"Users\";
 
@@ -658,9 +640,6 @@ namespace vortexstudio.universalserver.userdatabase
                 
                 //Encrypts the password using SHA512
                 Password = sha512Encryption.Encrypt(Password);
-
-                //Check all of the vars
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("DELUSR_VALUER"); return false; }
 
                 //Get the user file directory
                 string userFile = UserDirectory + Username + ".usr";
@@ -716,9 +695,6 @@ namespace vortexstudio.universalserver.userdatabase
                 //Encrypt the password using a SHA512 method
                 Password = sha512Encryption.Encrypt(Password);
 
-                //Check if the vars are correct
-                if (!CheckVarables()) { Console.WriteLine("[UserDatabase] ERROR : Required varables are equal to null."); SendMessage("USRADD_VALUER"); return false; }
-
                 //Get the directory for the user
                 string userFile = UserDirectory + Username + ".usr";
 
@@ -731,7 +707,7 @@ namespace vortexstudio.universalserver.userdatabase
 
                 //Create both the user file and the setting file
                 File.Create(userFile).Close();
-                File.Create(_ServerDirectory + @"Settings\" + Username + ".dat");
+                File.Create(_ServerDirectory + @"Setting\" + Username + ".dat").Close();
                 File.WriteAllText(userFile, Username + ":" + Password);
                 
                 //Sends a true message
@@ -749,21 +725,6 @@ namespace vortexstudio.universalserver.userdatabase
         #endregion
 
         #region Custom Method's
-
-        /// <summary>
-        /// Check if all of the local vars are null or not
-        /// </summary>
-        /// <returns></returns>
-        private bool CheckVarables()
-        {
-            //Check all local vars if it is null
-            if (ServerSocket == null || ClientSocket == null || _ServerDirectory == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
 
         /// <summary>
         /// Sends a message to the client
