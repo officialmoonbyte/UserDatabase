@@ -1,4 +1,4 @@
-﻿using IndieGoat.UniversalServer.Interfaces;
+﻿using Moonbyte.UniversalServer.PluginFramework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +9,7 @@ using System.Text;
 
 namespace vortexstudio.universalserver.userdatabase
 {
-    public class UserDatabase : IServerPlugin
+    public class UserDatabase : UniversalPluginFramework
     {
         public string Name { get { return "userdatabase"; } }
 
@@ -25,105 +25,27 @@ namespace vortexstudio.universalserver.userdatabase
         TcpClient ClientSocket;
 
         //Private Vars
-        string _ServerDirectory = null;
-
-        event EventHandler<SendMessageEventArgs> IServerPlugin.SendMessage
-        {
-            add
-            {
-                throw new NotImplementedException();
-            }
-
-            remove
-            {
-                throw new NotImplementedException();
-            }
-        }
+        string _PluginSettingsDirectory = null;
 
         #endregion
 
         #region OnLoad
 
         //Activates when the server loads the plugin
-        public void onLoad(string ServerDirectory)
+        public void OnLoad(string PluginSettingsDirectory)
         {
             //Set all of the directories
-            UserDirectory = ServerDirectory + @"Users\";
-            SettingDirectory = ServerDirectory + @"Setting\";
-            ValueDirectory = ServerDirectory + @"Values\";
+            UserDirectory = PluginSettingsDirectory + @"Users\";
+            SettingDirectory = PluginSettingsDirectory + @"Setting\";
+            ValueDirectory = PluginSettingsDirectory + @"Values\";
 
             //Sets the server directory
-            _ServerDirectory = ServerDirectory;
+            _PluginSettingsDirectory = PluginSettingsDirectory;
 
             //Create the directories if it does not exist
             if (!Directory.Exists(UserDirectory)) Directory.CreateDirectory(UserDirectory);
             if (!Directory.Exists(SettingDirectory)) Directory.CreateDirectory(SettingDirectory);
             if (!Directory.Exists(ValueDirectory)) Directory.CreateDirectory(ValueDirectory);
-        }
-
-        #endregion
-
-        #region OnInvoke
-
-        ClientSocketWorkload Workload; ClientContext Context;
-
-        //Activates when the plugin has been invoked
-        public void Invoke(ClientSocketWorkload workload, ClientContext context, int port, List<string> Args, string ServerDirectory)
-        {
-            Workload = workload; Context = context;
-            //Processes the command.
-            try
-            {
-                if (Args[1].ToUpper() == "ADDUSER")
-                {
-                    if (AddUser(Args[2], Args[3])) Console.WriteLine("[UserDatabase] Created a new user! Username : " + Args[2] + ", Password : " + Args[3]);
-                }
-                else if (Args[1].ToUpper() == "DELETEUSER")
-                {
-                    if (DeleteUser(Args[2], Args[3])) Console.WriteLine("[UserDatabase] Delete a user! Username : " + Args[2] + ", Password : " + Args[3]);
-                }
-                else if (Args[1].ToUpper() == "LOGINUSER")
-                {
-                    if (UserLogin(Args[2], Args[3])) Console.WriteLine("[UserDatabase] User has logged in! Username : " + Args[2] + ".");
-                }
-                else if (Args[1].ToUpper() == "CHANGEUSER")
-                {
-                    if (ChangeUsername(Args[2], Args[3], Args[4])) Console.WriteLine("[UserDatabase] User has changed there username! Username : " + Args[2] + ", New Username : " + Args[4]);
-                }
-                else if (Args[1].ToUpper() == "GETVALUE")
-                {
-                    if (GetServerValue(Args[2])) Console.WriteLine("[UserDatabase] User has collected a server value! Server value name : " + Args[2] + ".");
-                }
-                else if (Args[1].ToUpper() == "CHECKVALUE")
-                {
-                    if (CheckServerValue(Args[2])) Console.WriteLine("[UserDatabase] User has check if a setting exist! Server value name : " + Args[2] + ".");
-                }
-                else if (Args[1].ToUpper() == "EDITVALUE")
-                {
-                    if (EditServerValue(Args[2], Args[3])) Console.WriteLine("[UserDatabase] User has edit a value! Server value name : " + Args[2] + ", server value contents : " + Args[3]);
-                }
-                else if (Args[1].ToUpper() == "CHECKUSERSETTING")
-                {
-                    if (CheckUserSetting(Args[2], Args[3], Args[4])) Console.WriteLine("[UserDatabase] " + Args[2] + " has checked if " + Args[4] + " existed!");
-                }
-                else if (Args[1].ToUpper() == "GETUSERSETTING")
-                {
-                    if (GetUserSetting(Args[2], Args[3], Args[4])) Console.WriteLine("[UserDatabase] " + Args[2] + " has gathered " + Args[4] + ".");
-                }
-                else if (Args[1].ToUpper() == "EDITUSERSETTING")
-                {
-                    if (EditUserSetting(Args[2], Args[3], Args[4], Args[5])) Console.WriteLine("[UserDatabase " + Args[2] + " has changed " + Args[4] + ", new value : " + Args[5]);
-                }
-                else
-                {
-                    SendMessage("USRDBS_UNKNOWN");
-                }
-            }
-            catch
-            {
-                SendMessage("USRDBS_SPLIT");
-                Console.WriteLine("[UserDatabase] Failed to split the user request.");
-            }
         }
 
         #endregion
@@ -217,7 +139,7 @@ namespace vortexstudio.universalserver.userdatabase
                 SendMessage("EDTSET_FALSE");
 
                 //Logs the information in the console
-                Console.WriteLine("[UserDatabase] ERROR : Method EditUserSetting has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method EditUserSetting has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -257,10 +179,10 @@ namespace vortexstudio.universalserver.userdatabase
                 }
 
                 //Check if the settings directory exist for the user
-                if (File.Exists(_ServerDirectory + @"Settings\" + Username + ".dat"))
+                if (File.Exists(_PluginSettingsDirectory + @"Settings\" + Username + ".dat"))
                 {
                     //Get the contents of the setting file
-                    string[] settingFileContents = File.ReadAllLines(_ServerDirectory + @"Settings\" + Username + ".dat");
+                    string[] settingFileContents = File.ReadAllLines(_PluginSettingsDirectory + @"Settings\" + Username + ".dat");
                     for (int i = 0; i < settingFileContents.Count(); i++)
                     {
                         //Splits the setting into the title and the value
@@ -290,7 +212,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Sends a false error message
                 SendMessage("GETSET_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method GetUserSetting has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method GetUserSetting has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -330,7 +252,7 @@ namespace vortexstudio.universalserver.userdatabase
                 }
 
                 //Get the user setting directory and read that file into an array
-                string usrSettingFile = _ServerDirectory + @"Settings\" + Username + ".dat";
+                string usrSettingFile = _PluginSettingsDirectory + @"Settings\" + Username + ".dat";
                 List<string> settingListArray = new List<string>();
                 settingListArray = File.ReadAllLines(usrSettingFile).ToList();
 
@@ -357,7 +279,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Sends a false error message
                 SendMessage("CHKSET_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method CheckUserSetting has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method CheckUserSetting has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -373,7 +295,7 @@ namespace vortexstudio.universalserver.userdatabase
             try
             {
                 //Get the value directory
-                string valueDirectory = _ServerDirectory + @"Values\";
+                string valueDirectory = _PluginSettingsDirectory + @"Values\";
 
                 //Check if the value exist
                 if (!File.Exists(valueDirectory + ValueTitle + ".val"))
@@ -394,7 +316,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Sends a false error message
                 SendMessage("SVREDT_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method EditServerValue has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method EditServerValue has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -409,7 +331,7 @@ namespace vortexstudio.universalserver.userdatabase
             try
             {
                 //Initialize value directory
-                string valueDirectory = _ServerDirectory + @"Values\";
+                string valueDirectory = _PluginSettingsDirectory + @"Values\";
 
                 //Check if the setting file exist
                 if (File.Exists(valueDirectory + ValueTitle + ".val"))
@@ -429,7 +351,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Sends a false error message
                 SendMessage("SVRCEK_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method GetServerValue has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method GetServerValue has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -444,7 +366,7 @@ namespace vortexstudio.universalserver.userdatabase
             try
             {
                 //Initialize value directory
-                string valueDirectory = _ServerDirectory + @"Values\";
+                string valueDirectory = _PluginSettingsDirectory + @"Values\";
 
                 //Get the value file
                 string valueFile = valueDirectory + ValueTitle + ".val";
@@ -469,7 +391,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Send a false error message
                 SendMessage("SVRGET_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method GetServerValue has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method GetServerValue has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -512,7 +434,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Send a false error message
                 SendMessage("CNGPSD_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method ChangePassword has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method ChangePassword has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -561,7 +483,7 @@ namespace vortexstudio.universalserver.userdatabase
                 File.Move(usrFile, UserDirectory + NewUsername + ".usr");
 
                 //Changes the settings file name to the new user
-                File.Move(_ServerDirectory + @"Settings\" + Username + ".dat", _ServerDirectory + @"Settings\" + NewUsername + ".dat");
+                File.Move(_PluginSettingsDirectory + @"Settings\" + Username + ".dat", _PluginSettingsDirectory + @"Settings\" + NewUsername + ".dat");
                 SendMessage("CNGUSR_TRUE");
                 return true;
             }
@@ -569,7 +491,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Sends a false error message
                 SendMessage("CNGUSR_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method ChangeUser has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method ChangeUser has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -589,7 +511,7 @@ namespace vortexstudio.universalserver.userdatabase
                 Password = sha512Encryption.Encrypt(Password);
 
                 //Gets the user directory
-                string usrDirectory = _ServerDirectory + @"Users\";
+                string usrDirectory = _PluginSettingsDirectory + @"Users\";
 
                 //Check if the user file exist's
                 if (!File.Exists(usrDirectory + Username + ".usr"))
@@ -622,7 +544,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Returns the false message
                 SendMessage("USRLOG_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method UserLogin has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method UserLogin has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -660,7 +582,7 @@ namespace vortexstudio.universalserver.userdatabase
                 {
                     //Delete both the user file, and the settings file
                     File.Delete(userFile);
-                    File.Delete(_ServerDirectory + @"Settings\" + Username + ".dat");
+                    File.Delete(_PluginSettingsDirectory + @"Settings\" + Username + ".dat");
 
                     //Sends a true message
                     SendMessage("DELUSR_TRUE");
@@ -676,7 +598,7 @@ namespace vortexstudio.universalserver.userdatabase
             catch (Exception e)
             {
                 SendMessage("DELUSR_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method DeleteUser has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method DeleteUser has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -707,7 +629,7 @@ namespace vortexstudio.universalserver.userdatabase
 
                 //Create both the user file and the setting file
                 File.Create(userFile).Close();
-                File.Create(_ServerDirectory + @"Setting\" + Username + ".dat").Close();
+                File.Create(_PluginSettingsDirectory + @"Setting\" + Username + ".dat").Close();
                 File.WriteAllText(userFile, Username + ":" + Password);
                 
                 //Sends a true message
@@ -717,7 +639,7 @@ namespace vortexstudio.universalserver.userdatabase
             {
                 //Sends a false error message
                 SendMessage("USRADD_FALSE");
-                Console.WriteLine("[UserDatabase] ERROR : Method AddUser has encounter a error : " + e.ToString());
+                context.Log("WARN", "[UserDatabase] ERROR : Method AddUser has encounter a error : " + e.ToString());
                 return false;
             }
         }
@@ -734,14 +656,69 @@ namespace vortexstudio.universalserver.userdatabase
         private void SendMessage(string value)
         {
             //Sends a string to a client using UTF8
-            Workload.SendMessage(Context, value);
+            context.SendMessage(value);
         }
 
         #endregion
 
-        public void Unload()
+        ClientContext context;
+        public void Invoke(ClientContext Client, string[] RawCommand)
         {
+            context = Client; 
+            //Processes the command.
+            try
+            {
+                if (RawCommand[1].ToUpper() == "ADDUSER")
+                {
+                    if (AddUser(RawCommand[2], RawCommand[3])) context.Log("INFO", "[UserDatabase] Created a new user! Username : " + RawCommand[2] + ", Password : " + RawCommand[3]);
+                }
+                else if (RawCommand[1].ToUpper() == "DELETEUSER")
+                {
+                    if (DeleteUser(RawCommand[2], RawCommand[3])) context.Log("INFO", "[UserDatabase] Delete a user! Username : " + RawCommand[2] + ", Password : " + RawCommand[3]);
+                }
+                else if (RawCommand[1].ToUpper() == "LOGINUSER")
+                {
+                    if (UserLogin(RawCommand[2], RawCommand[3])) context.Log("INFO", "[UserDatabase] User has logged in! Username : " + RawCommand[2] + ".");
+                }
+                else if (RawCommand[1].ToUpper() == "CHANGEUSER")
+                {
+                    if (ChangeUsername(RawCommand[2], RawCommand[3], RawCommand[4])) context.Log("INFO", "[UserDatabase] User has changed there username! Username : " + RawCommand[2] + ", New Username : " + RawCommand[4]);
+                }
+                else if (RawCommand[1].ToUpper() == "GETVALUE")
+                {
+                    if (GetServerValue(RawCommand[2])) context.Log("INFO", "[UserDatabase] User has collected a server value! Server value name : " + RawCommand[2] + ".");
+                }
+                else if (RawCommand[1].ToUpper() == "CHECKVALUE")
+                {
+                    if (CheckServerValue(RawCommand[2])) context.Log("INFO", "[UserDatabase] User has check if a setting exist! Server value name : " + RawCommand[2] + ".");
+                }
+                else if (RawCommand[1].ToUpper() == "EDITVALUE")
+                {
+                    if (EditServerValue(RawCommand[2], RawCommand[3])) context.Log("INFO", "[UserDatabase] User has edit a value! Server value name : " + RawCommand[2] + ", server value contents : " + RawCommand[3]);
+                }
+                else if (RawCommand[1].ToUpper() == "CHECKUSERSETTING")
+                {
+                    if (CheckUserSetting(RawCommand[2], RawCommand[3], RawCommand[4])) context.Log("INFO", "[UserDatabase] " + RawCommand[2] + " has checked if " + RawCommand[4] + " existed!");
+                }
+                else if (RawCommand[1].ToUpper() == "GETUSERSETTING")
+                {
+                    if (GetUserSetting(RawCommand[2], RawCommand[3], RawCommand[4])) context.Log("INFO", "[UserDatabase] " + RawCommand[2] + " has gathered " + RawCommand[4] + ".");
+                }
+                else if (RawCommand[1].ToUpper() == "EDITUSERSETTING")
+                {
+                    if (EditUserSetting(RawCommand[2], RawCommand[3], RawCommand[4], RawCommand[5])) context.Log("INFO", "[UserDatabase " + RawCommand[2] + " has changed " + RawCommand[4] + ", new value : " + RawCommand[5]);
+                }
+                else
+                {
+                    SendMessage("USRDBS_UNKNOWN");
+                }
+            }
+            catch
+            {
+                SendMessage("USRDBS_SPLIT");
+                context.Log("WARN", "[UserDatabase] Failed to split the user request.");
 
+            }
         }
     }
 
