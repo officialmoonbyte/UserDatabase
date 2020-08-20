@@ -1,5 +1,5 @@
 ﻿using Moonbyte.UniversalServerAPI;
-using Moonbyte.UniversalServerAPI.Interface;
+using Moonbyte.UniversalServerAPI.Plugin;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,8 +16,7 @@ namespace Moonbyte.Plugins.userDatabase
         #region Vars
 
         public string Name { get { return "UserDatabase"; } }
-
-        private string Version = "1.3.2";
+        //public const string Version = 
 
         #region Directories
 
@@ -35,10 +34,10 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region Initialize
 
-        public bool Initialize(string PluginDataDirectory)
+        public bool Initialize(string PluginDataDirectory, UniversalPlugin BaseClass)
         {
 
-            Console.WriteLine(ConsoleColor.Yellow + "Running Universaldatabase by Moonbyte Corporation, Version " + Version);
+            Console.WriteLine(ConsoleColor.Yellow + "Running Universaldatabase by Moonbyte Corporation, Version 1.2.2.3"); // <== add version here in the future
 
             UserDirectories = Path.Combine(PluginDataDirectory, "Users"); // PluginDataDirectory + @"\Users\";
             GlobalSettingDirectories = Path.Combine(PluginDataDirectory, "GlobalSettings"); //PluginDataDirectory + @"\GlobalSettings\";
@@ -85,8 +84,8 @@ namespace Moonbyte.Plugins.userDatabase
             catch (Exception e)
             {
                 clientObject.clientSender.Send(clientObject, "USRDBS_ERROR");
-                clientObject.AddToLog("WARN", "Exception occurred in UserDatabase plugin.");
-                clientObject.LogExceptions(e);
+                ServerAPI.Log.AddToLog("WARN", "Exception occurred in UserDatabase plugin.");
+                ServerAPI.Log.LogExceptions(e);
                 return true;
             }
 
@@ -424,6 +423,17 @@ namespace Moonbyte.Plugins.userDatabase
         #endregion CheckUserInformation
 
         #endregion Private Method's
+
+        #region UniversalServerAPI
+
+        UniversalPlugin ServerAPI;
+        public UniversalPlugin GetUniversalPluginAPI()
+        { return ServerAPI; }
+
+        public void SetUniversalPluginAPI(UniversalPlugin Plugin)
+        { ServerAPI = Plugin; }
+
+        #endregion UniversalServerAPI
 
         #region Encrypting
 
