@@ -20,13 +20,15 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region Directories
 
-        string UserDirectories = null;
-        string GlobalSettingDirectories = null;
-        string AdminFileDirectory = null;
+        UniversalPlugin universalAPI;
 
-        private string GetUserDirectory(string Username) { return Path.Combine(UserDirectories, Username); }
-        private string GetUserFile(string Username) { return Path.Combine(GetUserDirectory(Username), "UserInfo.usr"); }
-        private string GetUserSettingsDirectory(string Username) { return Path.Combine(GetUserDirectory(Username), "Data"); }
+        string userDirectories = null;
+        string globalSettingDirectories = null;
+        string adminFileDirectory = null;
+
+        private string getUserDirectory(string username) => Path.Combine(userDirectories, username);
+        private string getUserFile(string username) => Path.Combine(getUserDirectory(username), "UserInfo.usr");
+        private string getUserSettingsDirectory(string username) => Path.Combine(getUserDirectory(username), "Data");
 
         #endregion Directories
 
@@ -34,18 +36,19 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region Initialize
 
-        public bool Initialize(string PluginDataDirectory, UniversalPlugin BaseClass)
+        public bool Initialize(string pluginDataDirectory, UniversalPlugin baseClass)
         {
+            universalAPI = baseClass;
 
             Console.WriteLine(ConsoleColor.Yellow + "Running Universaldatabase by Moonbyte Corporation, Version 1.2.2.3"); // <== add version here in the future
+            
+            userDirectories = Path.Combine(pluginDataDirectory, "Users"); // PluginDataDirectory + @"\Users\";
+            globalSettingDirectories = Path.Combine(pluginDataDirectory, "GlobalSettings"); //PluginDataDirectory + @"\GlobalSettings\";
+            adminFileDirectory = Path.Combine(pluginDataDirectory, "Admins.ini");
 
-            UserDirectories = Path.Combine(PluginDataDirectory, "Users"); // PluginDataDirectory + @"\Users\";
-            GlobalSettingDirectories = Path.Combine(PluginDataDirectory, "GlobalSettings"); //PluginDataDirectory + @"\GlobalSettings\";
-            AdminFileDirectory = Path.Combine(PluginDataDirectory, "Admins.ini");
-
-            if (!Directory.Exists(UserDirectories)) Directory.CreateDirectory(UserDirectories);
-            if (!Directory.Exists(GlobalSettingDirectories)) Directory.CreateDirectory(GlobalSettingDirectories);
-            if (!File.Exists(AdminFileDirectory)) File.Create(AdminFileDirectory).Close();
+            if (!Directory.Exists(userDirectories)) Directory.CreateDirectory(userDirectories);
+            if (!Directory.Exists(globalSettingDirectories)) Directory.CreateDirectory(globalSettingDirectories);
+            if (!File.Exists(adminFileDirectory)) File.Create(adminFileDirectory).Close();
 
             return true;
         }
@@ -59,27 +62,27 @@ namespace Moonbyte.Plugins.userDatabase
             try
             {
                 if (commandArgs[1].ToUpper() == "ADDUSER")
-                { return AddUser(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
+                { return addUser(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
                 else if (commandArgs[1].ToUpper() == "DELETEUSER")
-                { return DeleteUser(clientObject, commandArgs[2], commandArgs[3]); }
+                { return deleteUser(clientObject, commandArgs[2], commandArgs[3]); }
                 else if (commandArgs[1].ToUpper() == "LOGINUSER")
-                { return LoginUser(clientObject, commandArgs[2], commandArgs[3]); }
+                { return loginUser(clientObject, commandArgs[2], commandArgs[3]); }
                 else if (commandArgs[1].ToUpper() == "CHANGEUSER")
-                { return ChangeUsername(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
+                { return changeUsername(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
                 else if (commandArgs[1].ToUpper() == "CHANGEPASSWORD")
-                { return ChangePassword(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
+                { return changePassword(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
                 else if (commandArgs[1].ToUpper() == "GETVALUE")
-                { return GetValue(clientObject, commandArgs[2]); }
+                { return getValue(clientObject, commandArgs[2]); }
                 else if (commandArgs[1].ToUpper() == "CHECKVALUE")
-                { return CheckValue(clientObject, commandArgs[2]); }
+                { return checkValue(clientObject, commandArgs[2]); }
                 else if (commandArgs[1].ToUpper() == "EDITVALUE")
-                { return EditValue(clientObject, commandArgs[2], commandArgs[3], commandArgs[4], commandArgs[5]); }
+                { return editValue(clientObject, commandArgs[2], commandArgs[3], commandArgs[4], commandArgs[5]); }
                 else if (commandArgs[1].ToUpper() == "CHECKUSERSETTING")
-                { return CheckUserSetting(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
+                { return checkUserSetting(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
                 else if (commandArgs[1].ToUpper() == "GETUSERSETTING")
-                { return GetUserSetting(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
+                { return getUserSetting(clientObject, commandArgs[2], commandArgs[3], commandArgs[4]); }
                 else if (commandArgs[1].ToUpper() == "EDITUSERSETTING")
-                { return EditUserSetting(clientObject, commandArgs[2], commandArgs[3], commandArgs[4], commandArgs[5]); }
+                { return editUserSetting(clientObject, commandArgs[2], commandArgs[3], commandArgs[4], commandArgs[5]); }
             }
             catch (Exception e)
             {
@@ -108,20 +111,20 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region AddUser
 
-        private bool AddUser(ClientWorkObject workObject, string Username, string Password, string Email)
+        private bool addUser(ClientWorkObject workObject, string username, string password, string Email)
         {
-            if (CheckUserInformation(Username, Password) != "USERDOESNOTEXIST")
+            if (CheckUserInformation(username, password) != "USERDOESNOTEXIST")
             { workObject.clientSender.Send(workObject, "USRDBS_USRADD_USEREXIST"); return true; }
 
-            Password = sha512Encryption.Encrypt(Password);
+            password = sha512Encryption.Encrypt(password);
 
-            Directory.CreateDirectory(GetUserDirectory(Username));
-            Directory.CreateDirectory(GetUserSettingsDirectory(Username));
-            File.Create(GetUserFile(Username)).Close();
+            Directory.CreateDirectory(getUserDirectory(username));
+            Directory.CreateDirectory(getUserSettingsDirectory(username));
+            File.Create(getUserFile(username)).Close();
 
-            string userContent = Username + ":" + Password + ":" + Email + ":" + false.ToString();
+            string userContent = username + ":" + password + ":" + Email + ":" + false.ToString();
 
-            File.WriteAllText(GetUserFile(Username), Encrypt(userContent));
+            File.WriteAllText(getUserFile(username), Encrypt(userContent));
 
             workObject.clientSender.Send(workObject, "USRDBS_USRADD_TRUE");
             return true;
@@ -131,14 +134,14 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region DeleteUser
 
-        private bool DeleteUser(ClientWorkObject workObject, string Username, string Password)
+        private bool deleteUser(ClientWorkObject workObject, string username, string password)
         {
-            string returnedCheckedInformation = CheckUserInformation(Username, Password);
+            string returnedCheckedInformation = CheckUserInformation(username, password);
 
             if (returnedCheckedInformation == "USERDOESNOTEXIST") { workObject.clientSender.Send(workObject, "USRDBS_DELETEUSER_USEREXIST"); return true; }
             else if (returnedCheckedInformation == false.ToString()) { workObject.clientSender.Send(workObject, "USRDBS_DELETEUSER_AUTHERROR"); return true; }
 
-            Directory.Delete(GetUserDirectory(Username), true);
+            Directory.Delete(getUserDirectory(username), true);
 
             workObject.clientSender.Send(workObject, "USRDBS_DELETEUSER_TRUE");
             return true;
@@ -148,9 +151,9 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region LoginUser
 
-        private bool LoginUser(ClientWorkObject workObject, string Username, string Password)
+        private bool loginUser(ClientWorkObject workObject, string username, string password)
         {
-            string returnedCheckedInformation = CheckUserInformation(Username, Password);
+            string returnedCheckedInformation = CheckUserInformation(username, password);
 
             if (returnedCheckedInformation == "USERDOESNOTEXIST") { workObject.clientSender.Send(workObject, "USRDBS_LOGINUSER_USEREXIST"); return true; }
             else if (returnedCheckedInformation == false.ToString()) { workObject.clientSender.Send(workObject, "USRDBS_LOGINUSER_FALSE"); return true; }
@@ -163,27 +166,27 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region ChangeUser
 
-        private bool ChangeUsername(ClientWorkObject workObject, string Username, string Password, string NewUsername)
+        private bool changeUsername(ClientWorkObject workObject, string username, string password, string newUsername)
         {
-            string returnedCheckedInformation = CheckUserInformation(Username, Password);
+            string returnedCheckedInformation = CheckUserInformation(username, password);
 
             if (returnedCheckedInformation == "USERDOESNOTEXIST") { workObject.clientSender.Send(workObject, "USRDBS_CHANGEUSER_USEREXIST"); return true; }
             else if (returnedCheckedInformation == false.ToString()) { workObject.clientSender.Send(workObject, "USRDBS_CHANGEUSER_AUTHERROR"); return true; }
             else if (returnedCheckedInformation == true.ToString()) 
             {
-                string[] oldData = Decrypt(File.ReadAllText(GetUserFile(Username))).Split(':');
-                string Email = oldData[2]; bool Verified = bool.Parse(oldData[3]); Password = sha512Encryption.Encrypt(Password);
-                string userContent = NewUsername + ":" + Password + ":" + Email + ":" + Verified.ToString();
+                string[] oldData = Decrypt(File.ReadAllText(getUserFile(username))).Split(':');
+                string Email = oldData[2]; bool Verified = bool.Parse(oldData[3]); password = sha512Encryption.Encrypt(password);
+                string userContent =newUsername + ":" + password + ":" + Email + ":" + Verified.ToString();
 
-                Directory.CreateDirectory(GetUserDirectory(NewUsername));
-                Directory.CreateDirectory(GetUserSettingsDirectory(NewUsername));
-                File.Create(GetUserFile(NewUsername)).Close();
-                File.WriteAllText(GetUserFile(NewUsername), Encrypt(userContent));
+                Directory.CreateDirectory(getUserDirectory(newUsername));
+                Directory.CreateDirectory(getUserSettingsDirectory(newUsername));
+                File.Create(getUserFile(newUsername)).Close();
+                File.WriteAllText(getUserFile(newUsername), Encrypt(userContent));
 
-                foreach(FileInfo fi in new DirectoryInfo(GetUserSettingsDirectory(Username)).GetFiles())
-                { fi.CopyTo(Path.Combine(GetUserSettingsDirectory(NewUsername), fi.Name)); }
+                foreach(FileInfo fi in new DirectoryInfo(getUserSettingsDirectory(username)).GetFiles())
+                { fi.CopyTo(Path.Combine(getUserSettingsDirectory(newUsername), fi.Name)); }
 
-                Directory.Delete(GetUserDirectory(Username), true);
+                Directory.Delete(getUserDirectory(username), true);
 
                 workObject.clientSender.Send(workObject, "USRDBS_CHANGEUSER_TRUE"); return true; 
             }
@@ -195,19 +198,19 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region ChangePassword
 
-        private bool ChangePassword(ClientWorkObject workObject, string Username, string Password, string NewPassword)
+        private bool changePassword(ClientWorkObject workObject, string username, string password, string newPassword)
         {
-            string returnedCheckedInformation = CheckUserInformation(Username, Password);
+            string returnedCheckedInformation = CheckUserInformation(username, password);
 
             if (returnedCheckedInformation == "USERDOESNOTEXIST") { workObject.clientSender.Send(workObject, "USRDBS_CHANGEPASSWORD_USEREXIST"); return true; }
             else if (returnedCheckedInformation == false.ToString()) { workObject.clientSender.Send(workObject, "USRDBS_CHANGEPASSWORD_AUTHERROR"); return true; }
             else if (returnedCheckedInformation == true.ToString())
             {
-                string[] oldData = Decrypt(File.ReadAllText(GetUserFile(Username))).Split(':');
-                string Email = oldData[2]; bool Verified = bool.Parse(oldData[3]); NewPassword = sha512Encryption.Encrypt(NewPassword);
-                string userContent = Username + ":" + NewPassword + ":" + Email + ":" + Verified.ToString();
+                string[] oldData = Decrypt(File.ReadAllText(getUserFile(username))).Split(':');
+                string Email = oldData[2]; bool Verified = bool.Parse(oldData[3]); newPassword = sha512Encryption.Encrypt(newPassword);
+                string userContent = username + ":" + newPassword + ":" + Email + ":" + Verified.ToString();
 
-                File.WriteAllText(GetUserFile(Username), Encrypt(userContent));
+                File.WriteAllText(getUserFile(username), Encrypt(userContent));
                 workObject.clientSender.Send(workObject, "USRDBS_CHANGEPASSWORD_TRUE"); return true;
             }
 
@@ -218,14 +221,14 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region GetValue
 
-        private bool GetValue(ClientWorkObject workObject, string ValueTitle)
+        private bool getValue(ClientWorkObject workObject, string valueTitle)
         {
-            string CheckValue = checkglobalvalue(ValueTitle);
+            string CheckValue = checkglobalvalue(valueTitle);
             if (CheckValue == false.ToString())
             { workObject.clientSender.Send(workObject, "USRDBS_GETVALUE_VALUEEXIST"); return true; }
             else if (CheckValue == true.ToString())
             {
-                string ValueFileName = Path.Combine(GlobalSettingDirectories, ValueTitle + ".dat");
+                string ValueFileName = Path.Combine(globalSettingDirectories, valueTitle + ".dat");
                 workObject.clientSender.Send(workObject, Decrypt(File.ReadAllText(ValueFileName))); return true;
             }
 
@@ -236,9 +239,9 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region CheckValue
 
-        private bool CheckValue(ClientWorkObject workObject, string ValueTitle)
+        private bool checkValue(ClientWorkObject workObject, string valueTitle)
         {
-            string CheckValue = checkglobalvalue(ValueTitle);
+            string CheckValue = checkglobalvalue(valueTitle);
             if (CheckValue == false.ToString())
             { workObject.clientSender.Send(workObject, "USRDBS_CHECKVALUE_FALSE"); return true; }
             else if (CheckValue == true.ToString())
@@ -252,18 +255,18 @@ namespace Moonbyte.Plugins.userDatabase
         #region EditValue
 
         // Won't be added till server admin verification is added
-        private bool EditValue(ClientWorkObject workObject, string Username, string Password, string ValueTitle, string ValueString)
+        private bool editValue(ClientWorkObject workObject, string username, string password, string valueTitle, string valueString)
         {
-            string returnedCheckedInformation = CheckUserInformation(Username, Password);
+            string returnedCheckedInformation = CheckUserInformation(username, password);
 
             if (returnedCheckedInformation == "USERDOESNOTEXIST") { workObject.clientSender.Send(workObject, "USRDBS_EDITVALUE_USEREXIST"); return true; }
             else if (returnedCheckedInformation == false.ToString()) { workObject.clientSender.Send(workObject, "USRDBS_EDITVALUE_AUTHERROR"); return true; }
             else if (returnedCheckedInformation == true.ToString())
             {
-                if (CheckOP(Username))
+                if (CheckOP(username))
                 {
-                    string ValueFileName = Path.Combine(GlobalSettingDirectories, ValueTitle + ".dat");
-                    File.WriteAllText(ValueFileName, Encrypt(ValueString));
+                    string ValueFileName = Path.Combine(globalSettingDirectories, valueTitle + ".dat");
+                    File.WriteAllText(ValueFileName, Encrypt(valueString));
 
                     workObject.clientSender.Send(workObject, "USRDBS_EDITVALUE_TRUE");
                 }
@@ -277,9 +280,9 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region CheckUserSetting
 
-        private bool CheckUserSetting(ClientWorkObject workObject, string Username, string Password, string UserSettingTitle)
+        private bool checkUserSetting(ClientWorkObject workObject, string username, string password, string userSettingTitle)
         {
-            string checkUserSetting = checkusersetting(Username, Password, UserSettingTitle);
+            string checkUserSetting = checkusersetting(username, password, userSettingTitle);
             if (checkUserSetting == "USERDOESNOTEXIST") 
             { workObject.clientSender.Send(workObject, "USRDBS_CHECKUSERSETTING_USEREXIST"); return true; }
             else if (checkUserSetting == "AuthError") 
@@ -298,9 +301,9 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region GetUserSetting
 
-        private bool GetUserSetting(ClientWorkObject workObject, string Username, string Password, string UserSettingTitle)
+        private bool getUserSetting(ClientWorkObject workObject, string username, string password, string userSettingTitle)
         {
-            string checkUserSetting = checkusersetting(Username, Password, UserSettingTitle);
+            string checkUserSetting = checkusersetting(username, password, userSettingTitle);
             if (checkUserSetting == "USERDOESNOTEXIST")
             { workObject.clientSender.Send(workObject, "USRDBS_GETUSERSETTING_USEREXIST"); return true; }
             else if (checkUserSetting == "AuthError")
@@ -311,7 +314,7 @@ namespace Moonbyte.Plugins.userDatabase
             { return false; }
             else if (checkUserSetting == true.ToString())
             {
-                string UserSettingFileDirectory = Path.Combine(GetUserSettingsDirectory(Username), UserSettingTitle + ".dat");
+                string UserSettingFileDirectory = Path.Combine(getUserSettingsDirectory(username), userSettingTitle + ".dat");
                 workObject.clientSender.Send(workObject, Decrypt(File.ReadAllText(UserSettingFileDirectory))); return true; 
             }
 
@@ -322,17 +325,17 @@ namespace Moonbyte.Plugins.userDatabase
 
         #region EditUserSetting
 
-        private bool EditUserSetting(ClientWorkObject workObject, string Username, string Password, string UserSettingTitle, string UserSettingValue)
+        private bool editUserSetting(ClientWorkObject workObject, string username, string password, string userSettingTitle, string userSettingValue)
         {
-            string userInformation = CheckUserInformation(Username, Password);
+            string userInformation = CheckUserInformation(username, password);
             if (userInformation == "USERDOESNOTEXIST") { workObject.clientSender.Send(workObject, "USRDBS_EDITUSERSETTING_USEREXIST"); return true; }
             else if (userInformation == false.ToString()) { workObject.clientSender.Send(workObject, "USRDBS_EDITUSERSETTING_AUTHERROR"); return true; }
             else if (userInformation == true.ToString())
             {
-                string UserSettingFileDirectory = Path.Combine(GetUserSettingsDirectory(Username), UserSettingTitle + ".dat");
+                string UserSettingFileDirectory = Path.Combine(getUserSettingsDirectory(username), userSettingTitle + ".dat");
 
                 if (!File.Exists(UserSettingFileDirectory)) { File.Create(UserSettingFileDirectory).Close(); }
-                File.WriteAllText(UserSettingFileDirectory, Encrypt(UserSettingValue));
+                File.WriteAllText(UserSettingFileDirectory, Encrypt(userSettingValue));
 
                 workObject.clientSender.Send(workObject, "USRDBS_EDITUSERSETTING_TRUE"); return true;
             }
@@ -348,8 +351,8 @@ namespace Moonbyte.Plugins.userDatabase
 
         private void OP(string Username, Logger iLogger)
         {
-            List<string> ops = File.ReadAllLines(AdminFileDirectory).ToList();
-            ops.Add(Username); File.WriteAllLines(AdminFileDirectory, ops);
+            List<string> ops = File.ReadAllLines(adminFileDirectory).ToList();
+            ops.Add(Username); File.WriteAllLines(adminFileDirectory, ops);
             ops = null; iLogger.AddToLog("INFO", "Added [" + Username + "] to the ops file!");
         }
 
@@ -361,7 +364,7 @@ namespace Moonbyte.Plugins.userDatabase
 
         private bool CheckOP(string Username)
         {
-            List<string> ops = File.ReadAllLines(AdminFileDirectory).ToList();
+            List<string> ops = File.ReadAllLines(adminFileDirectory).ToList();
 
             foreach (string s in ops)
             { if (s == Username) { return true; } }
@@ -374,7 +377,7 @@ namespace Moonbyte.Plugins.userDatabase
 
         private string checkglobalvalue(string ValueTitle)
         {
-            string ValueFileName = Path.Combine(GlobalSettingDirectories, ValueTitle + ".dat");
+            string ValueFileName = Path.Combine(globalSettingDirectories, ValueTitle + ".dat");
             if (File.Exists(ValueFileName))
             { return true.ToString(); } else { return false.ToString(); }
         }
@@ -390,7 +393,7 @@ namespace Moonbyte.Plugins.userDatabase
             else if(userInformation == false.ToString()) { return "AuthError"; }
             else if (userInformation == true.ToString())
             {
-                string UserSettingFileDirectory = Path.Combine(GetUserSettingsDirectory(Username), UserSettingTitle + ".dat");
+                string UserSettingFileDirectory = Path.Combine(getUserSettingsDirectory(Username), UserSettingTitle + ".dat");
 
                 if (File.Exists(UserSettingFileDirectory))
                 { return true.ToString(); }
@@ -406,7 +409,7 @@ namespace Moonbyte.Plugins.userDatabase
 
         private string CheckUserInformation(string Username, string Password)
         {
-            string UserFile = GetUserFile(Username);
+            string UserFile = getUserFile(Username);
 
             if (!File.Exists(UserFile))
             { return "USERDOESNOTEXIST"; }
