@@ -1,5 +1,6 @@
-﻿using Moonbyte.UniversalServerAPI;
-using Moonbyte.UniversalServerAPI.Plugin;
+﻿using Moonbyte.UniversalServer.Core.Client;
+using Moonbyte.UniversalServer.Core.Plugin;
+using Moonbyte.UniversalServer.Plugin.Module;
 using System;
 using System.Collections.Generic;
 using System.IO;
