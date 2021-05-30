@@ -36,6 +36,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Crayon, Version=2.0.60.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Crayon.2.0.60\lib\netstandard2.0\Crayon.dll</HintPath>
+    </Reference>
     <Reference Include="MoonbyteSettingsManager, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MSM.2.0.1\lib\net45\MoonbyteSettingsManager.dll</HintPath>
     </Reference>

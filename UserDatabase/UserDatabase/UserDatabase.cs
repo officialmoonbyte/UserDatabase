@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
+using static Crayon.Output;
 
 namespace Moonbyte.Plugins.userDatabase
 {
@@ -18,7 +19,6 @@ namespace Moonbyte.Plugins.userDatabase
         #region Vars
 
         public string Name { get { return "UserDatabase"; } }
-        //public const string Version = 
 
         #region Directories
 
@@ -42,10 +42,10 @@ namespace Moonbyte.Plugins.userDatabase
         {
             universalAPI = baseClass;
 
-            Console.WriteLine(ConsoleColor.Yellow + "Running Universaldatabase by Moonbyte Corporation, Version 1.2.2.3"); // <== add version here in the future
-            
-            userDirectories = Path.Combine(pluginDataDirectory, "Users"); // PluginDataDirectory + @"\Users\";
-            globalSettingDirectories = Path.Combine(pluginDataDirectory, "GlobalSettings"); //PluginDataDirectory + @"\GlobalSettings\";
+            ServerAPI.Log.AddToLog(ILogger.Levels.INFO, Yellow("Running Universaldatabase by Moonbyte Corporation, Version 1.3.6.0")); //TO-DO: Add dynamic plugin version here
+
+            userDirectories = Path.Combine(pluginDataDirectory, "Users"); 
+            globalSettingDirectories = Path.Combine(pluginDataDirectory, "GlobalSettings");
             adminFileDirectory = Path.Combine(pluginDataDirectory, "Admins.ini");
 
             if (!Directory.Exists(userDirectories)) Directory.CreateDirectory(userDirectories);
