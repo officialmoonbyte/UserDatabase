@@ -1,4 +1,5 @@
 ﻿using Moonbyte.UniversalServer.Core.Client;
+using Moonbyte.UniversalServer.Core.Logging;
 using Moonbyte.UniversalServer.Core.Plugin;
 using Moonbyte.UniversalServer.Plugin.Module;
 using System;
@@ -88,7 +89,7 @@ namespace Moonbyte.Plugins.userDatabase
             catch (Exception e)
             {
                 clientObject.clientSender.Send(clientObject, "USRDBS_ERROR");
-                ServerAPI.Log.AddToLog("WARN", "Exception occurred in UserDatabase plugin.");
+                ServerAPI.Log.AddToLog(ILogger.Levels.WARN, "Exception occurred in UserDatabase plugin.");
                 ServerAPI.Log.LogExceptions(e);
                 return true;
             }
@@ -354,7 +355,7 @@ namespace Moonbyte.Plugins.userDatabase
         {
             List<string> ops = File.ReadAllLines(adminFileDirectory).ToList();
             ops.Add(Username); File.WriteAllLines(adminFileDirectory, ops);
-            ops = null; iLogger.AddToLog("INFO", "Added [" + Username + "] to the ops file!");
+            ops = null; iLogger.AddToLog(ILogger.Levels.INFO, "Added [" + Username + "] to the ops file!"); ;
         }
 
         #endregion ConsoleCommands
